@@ -11,6 +11,8 @@
     "build": "tsc"
   },
   "dependencies": {
-    "express": "^4.21.1"
+    "@types/jsonwebtoken": "^9.0.7",
+    "express": "^4.21.1",
+    "jsonwebtoken": "^9.0.2"
   }
 }

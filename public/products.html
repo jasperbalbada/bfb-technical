@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inspection Reports</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    .product {
+      margin-bottom: 15px;
+      border: 1px solid #ccc;
+      padding: 10px;
+    }
+    .disabled {
+      background-color: #f0f0f0;
+      color: #aaa;
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+<body>
+  <h1>Inspection Reports</h1>
+  <div id="products-container"></div>
+
+  <script>
+    let users = [];
+    let products = [];
+    let orders = [];
+    let currentUserId;
+
+    async function init() {
+      try {
+        const userResponse = await fetch('/api/users');
+        users = await userResponse.json();
+
+        const productResponse = await fetch('/api/products');
+        products = await productResponse.json();
+
+        const orderResponse = await fetch('/api/orders');
+        orders = await orderResponse.json();
+
+        let isLoggedIn = false;
+        if (localStorage.getItem('isLoggedIn') === 'true') {
+          isLoggedIn = true;
+          currentUserId = users.find(user => user.email === localStorage.getItem('currentUserEmail')).id;
+        }
+
+        fetchProducts();
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
+    }
+
+    // function to display Inspection Reports or Products
+    async function fetchProducts() {
+      const container = document.getElementById('products-container');
+
+      products.forEach(product => {
+        const productDiv = document.createElement('div');
+        productDiv.className = 'product';
+
+        // this disables the download button when user has not purchased the corresponding Product
+        const hasOrdered = orders.some(order => order.productId === product.id && order.purchaserId === currentUserId);
+
+        productDiv.innerHTML = `
+          <h2>${product.title}</h2>
+          <p>Resale Price: $${product.resalePrice}</p>
+          <button 
+              class="${hasOrdered ? '' : 'disabled'}" 
+              ${hasOrdered ? '' : 'disabled'}
+              onclick="${hasOrdered ? `window.open('verify.html?productId=${product.id}', '_blank')` : ''}"
+          >
+              ${hasOrdered ? 'Download File' : 'Purchase report to download'}
+          </button>
+          <div id="link-${product.id}"></div>
+        `;
+        container.appendChild(productDiv);
+      });
+    }
+
+    async function generateDownloadLink(productId) {
+      try {
+        const response = await fetch(`/api/download/${productId}`);
+        const result = await response.json();
+        const linkDiv = document.getElementById(`link-${productId}`);
+
+        if (result.success) {
+          linkDiv.innerHTML = `<a href="${result.link}" target="_blank">Download as PDF</a>`;
+        } else {
+          linkDiv.innerHTML = `<p>${result.message}</p>`;
+        }
+      } catch (error) {
+        console.error('Error generating download link:', error);
+      }
+    }
+
+    window.onload = init;
+  </script>
+</body>
+</html>
