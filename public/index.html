@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Login</h1>
+  <div class="login-form">
+    <input type="text" id="username" placeholder="Email" required>
+    <input type="password" id="password" placeholder="Password" required>
+    <button onclick="login()">Login</button>
+    <p id="login-message"></p>
+  </div>
+
+  <script>
+    // simple login function
+    // NOTE: passwords are typically encrypted and stored safe. this is only for simulation
+    async function login() {
+      const usernameInput = document.getElementById('username').value;
+      const passwordInput = document.getElementById('password').value;
+      const loginMessage = document.getElementById('login-message');
+
+      try {
+        const response = await fetch('/api/users');
+        const users = await response.json();
+
+        const validUser = users.find(user => user.email === usernameInput && passwordInput === 'password');
+
+        if (validUser) {
+          localStorage.setItem('isLoggedIn', 'true');
+          localStorage.setItem('currentUserEmail', validUser.email);
+          localStorage.setItem('currentUserId', validUser.id);
+
+          loginMessage.textContent = 'Login successful!';
+
+          // redirects to products page after successful login
+          window.location.href = 'products.html';
+        } else {
+          loginMessage.textContent = 'Invalid credentials, please try again.';
+        }
+      } catch (error) {
+        console.error('Error fetching users:', error);
+        loginMessage.textContent = 'An error occurred while logging in.';
+      }
+    }
+  </script>
+</body>
+</html>

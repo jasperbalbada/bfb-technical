@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Enter Code</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h2>Enter the code sent to your email to download the file.</h2>
+  <p id="generatedCode">Fetching your code...</p>
+  <input type="text" id="inputCode" placeholder="Enter 6-digit code" maxlength="6" />
+  <button id="submitCode" onclick="submitCode()">Submit</button>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const productId = urlParams.get('productId');
+    let generatedCode = '';
+
+    // displays the generated code upon clicking Download File
+    async function fetchGeneratedCode() {
+      try {
+        const response = await fetch(`/api/download/generate/${productId}`);
+        const result = await response.json();
+
+        if (result.success) {
+          generatedCode = result.code;
+          document.getElementById('generatedCode').innerText = `Your Code: ${generatedCode}`;
+        } else {
+          document.getElementById('generatedCode').innerText = `Error: ${result.message}`;
+        }
+      } catch (error) {
+        console.error('Error fetching generated code:', error);
+        document.getElementById('generatedCode').innerText = 'Error fetching the code';
+      }
+    }
+
+    fetchGeneratedCode();
+
+    // handles and checks the input code
+    async function submitCode() {
+      const inputCode = document.getElementById('inputCode').value;
+
+      if (inputCode !== generatedCode) {
+        alert('Invalid code. Please try again.');
+        return;
+      }
+
+      const response = await fetch(`/api/download/${productId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ code: generatedCode }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        alert(`Code verified successfully. Close this to proceed to your file..`);
+        window.open(result.link, '_blank');
+        window.close();
+      } else {
+        alert(result.message);
+      }
+    }
+  </script>
+</body>
+</html>
